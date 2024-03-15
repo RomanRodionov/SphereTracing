@@ -4,6 +4,8 @@ project(SphereTracing VERSION 0.1.0 LANGUAGES C CXX)
 include(CTest)
 enable_testing()
 
+include_directories("external/LiteMath")
+
 set(SOURCES
     src/main.cpp
 )

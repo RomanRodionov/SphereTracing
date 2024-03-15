@@ -2,6 +2,8 @@
 #include <cstring>
 #include <cstdio>
 #include <errno.h>
+#include "LiteMath.h"
+using namespace LiteMath;
 
 namespace nsdf
 {
@@ -13,6 +15,23 @@ namespace nsdf
     float fov_rad = 3.14159265f / 3; //field of view in radians
     float z_near = 0.1f; //distance to near plane
     float z_far = 100.0f; //distance to far plane
+
+    float3 generate_ray(float u, float v, float aspect_ratio = 1.f)
+    {
+      double viewport_width = 2.0 * tan(fov_rad / 2.0) * z_near;
+      double viewport_height = viewport_width / aspect_ratio;
+      
+      float3 w_dir = normalize(float3(target_x - pos_x, target_y - pos_y, target_z - pos_z));
+      float3 u_dir = normalize(-cross(float3(up_x, up_y, up_z), w_dir));
+      float3 v_dir = cross(w_dir, u_dir);
+
+      float3 pos = float3(pos_x, pos_y, pos_z);
+      float3 horizontal = u_dir * viewport_width;
+      float3 vertical = v_dir * viewport_height;
+      float3 ll_corner = pos - horizontal / 2 - vertical / 2 + w_dir * z_near;
+
+      return normalize(ll_corner + horizontal * u + vertical * v - pos);
+    }
 
     bool to_file(const char *filename)
     {
