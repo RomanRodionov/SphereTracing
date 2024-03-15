@@ -7,6 +7,7 @@ enable_testing()
 include_directories("external/LiteMath")
 
 set(SOURCES
+    src/sphere_tracing.cpp
     src/main.cpp
 )
 
