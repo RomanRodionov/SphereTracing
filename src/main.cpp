@@ -17,16 +17,16 @@ int main()
   image.resize(WIDTH * HEIGHT * 3);
 
   nsdf::Camera camera;
-  camera.from_file("task1_references/cam1.txt");
+  from_file(&camera, "task1_references/cam1.txt");
 
   nsdf::DirectedLight dir_light;
-  dir_light.from_file("task1_references/light.txt");
+  from_file(&dir_light, "task1_references/light.txt");
 
   nsdf::PrimitiveSDFScene scene;
   scene.from_file("task1_references/scene1.txt");
 
   SphereTracer renderer;
-  renderer.draw(image, scene, camera, dir_light, WIDTH, HEIGHT);
+  renderer.draw(scene.scene_data.data(), scene.scene_data.size(), image.data(), camera, dir_light, WIDTH, HEIGHT);
 
   write_image_rgb("image.png", image, WIDTH, HEIGHT);
 

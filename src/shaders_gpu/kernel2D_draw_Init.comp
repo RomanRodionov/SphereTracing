@@ -1,0 +1,85 @@
+#version 460
+#extension GL_GOOGLE_include_directive : require
+
+#include "common_gpu.h"
+
+layout(binding = 0, set = 0) buffer data0 { float image[]; }; //
+layout(binding = 1, set = 0) buffer data1 { float scene[]; }; //
+layout(binding = 2, set = 0) buffer dataUBO { SphereTracer_GPU_UBO_Data ubo; };
+
+void trace_scene(Ray ray, uint sceneOffset, uint count, uint steps, float min_threshold, float max_threshold, inout HitRecord hit_record) {
+    float dist;
+    Sphere closest_sphere;
+    for (uint step = 0; step < steps; ++step)
+    {
+        dist = 1e6f;
+        for (uint i = 0; i < count; ++i)
+        {
+            Sphere sphere;
+            sphere.pos_x = scene[i * 4 + sceneOffset];
+            sphere.pos_y = scene[i * 4 + 1 + sceneOffset];
+            sphere.pos_z = scene[i * 4 + 2 + sceneOffset];
+            sphere.radius = scene[i * 4 + 3 + sceneOffset];
+            float cur_dist = sphere_distance(sphere, ray);
+            if (abs(dist) - abs(cur_dist) > 0)
+            {
+                dist = cur_dist;
+                closest_sphere = sphere;
+            }
+        }
+        ray.pos_x += ray.dir_x * dist;
+        ray.pos_y += ray.dir_y * dist;
+        ray.pos_z += ray.dir_z * dist;
+        if (abs(dist) < min_threshold || abs(dist) > max_threshold)
+        {
+            step = steps;
+        }
+    }
+
+    hit_record.hit = abs(dist) < min_threshold;
+    if (hit_record.hit)
+    {
+        hit_record.pos_x = ray.pos_x;
+        hit_record.pos_y = ray.pos_y;
+        hit_record.pos_z = ray.pos_z;
+        vec3 normal = normalize(vec3(ray.pos_x - closest_sphere.pos_x,ray.pos_y - closest_sphere.pos_y,ray.pos_z - closest_sphere.pos_z));
+        hit_record.normal_x = normal.x;
+        hit_record.normal_y = normal.y;
+        hit_record.normal_z = normal.z;
+    }
+    hit_record.pos_x = ray.pos_x;
+    hit_record.pos_y = ray.pos_y;
+    hit_record.pos_z = ray.pos_z;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+layout( push_constant ) uniform kernelArgs
+{
+  uint count;
+  Camera camera;
+  DirectedLight dir_light;
+  uint height; 
+  uint width; 
+  uint iNumElementsZ; 
+  uint tFlagsMask;    
+} kgenArgs;
+
+
+void main()
+{
+  bool runThisThread = true;
+  if(runThisThread)
+  {
+  
+  const uint MAX_STEPS = 15;
+  const uint SAMPLES = 10;
+  const float MIN_THRESHOLD = 0.001f;
+  const float MAX_THRESHOLD = 1000.f;;
+  }
+}
+

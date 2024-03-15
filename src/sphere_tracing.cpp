@@ -1,11 +1,28 @@
 #include "sphere_tracing.h"
 
-float sphere_distance(Sphere s, Ray r)
+float3 SphereTracer::generate_ray(const nsdf::Camera camera, const float u, const float v, const float aspect_ratio)
+{
+  double viewport_height = 2.0 * tanf(camera.fov_rad / 2.0) * camera.z_near;
+  double viewport_width = viewport_height * aspect_ratio;
+  
+  float3 w_dir = normalize(float3(camera.target_x - camera.pos_x, camera.target_y - camera.pos_y, camera.target_z - camera.pos_z));
+  float3 u_dir = normalize(-cross(float3(camera.up_x, camera.up_y, camera.up_z), w_dir));
+  float3 v_dir = cross(w_dir, u_dir);
+
+  float3 pos = float3(camera.pos_x, camera.pos_y, camera.pos_z);
+  float3 horizontal = u_dir * viewport_width;
+  float3 vertical = v_dir * viewport_height;
+  float3 ll_corner = pos - horizontal / 2 - vertical / 2 + w_dir * camera.z_near;
+
+  return normalize(ll_corner + horizontal * u + vertical * v - pos);
+}
+
+float SphereTracer::sphere_distance(Sphere s, Ray r)
 {
     return length(float3(r.pos_x - s.pos_x, r.pos_y - s.pos_y, r.pos_z - s.pos_z)) - s.radius;
 }
 
-void trace(Ray ray, const float* scene, uint count, uint steps, float min_threshold, float max_threshold, HitRecord* hit_record)
+SphereTracer::HitRecord SphereTracer::trace(Ray ray, const float* scene, uint count, uint steps, float min_threshold, float max_threshold)
 {
     float dist;
     Sphere closest_sphere;
@@ -35,38 +52,42 @@ void trace(Ray ray, const float* scene, uint count, uint steps, float min_thresh
         }
     }
 
-    hit_record->hit = fabs(dist) < min_threshold;
-    if (hit_record->hit)
+    HitRecord hit_record;
+    hit_record.hit = fabs(dist) < min_threshold;
+    if (hit_record.hit)
     {
-        hit_record->pos_x = ray.pos_x;
-        hit_record->pos_y = ray.pos_y;
-        hit_record->pos_z = ray.pos_z;
+        hit_record.pos_x = ray.pos_x;
+        hit_record.pos_y = ray.pos_y;
+        hit_record.pos_z = ray.pos_z;
         float3 normal = normalize(float3(ray.pos_x - closest_sphere.pos_x, ray.pos_y - closest_sphere.pos_y, ray.pos_z - closest_sphere.pos_z));
-        hit_record->normal_x = normal.x;
-        hit_record->normal_y = normal.y;
-        hit_record->normal_z = normal.z;
+        hit_record.normal_x = normal.x;
+        hit_record.normal_y = normal.y;
+        hit_record.normal_z = normal.z;
     }
-    hit_record->pos_x = ray.pos_x;
-    hit_record->pos_y = ray.pos_y;
-    hit_record->pos_z = ray.pos_z;
+    hit_record.pos_x = ray.pos_x;
+    hit_record.pos_y = ray.pos_y;
+    hit_record.pos_z = ray.pos_z;
+    return hit_record;
 }
 
-void SphereTracer::draw(std::vector<float>& image, nsdf::PrimitiveSDFScene scene, nsdf::Camera camera, nsdf::DirectedLight dir_light, uint width, uint height)
+void SphereTracer::draw(const float* scene, uint count, float* image,
+  nsdf::Camera camera, nsdf::DirectedLight light, uint width, uint height)
 {
-  kernel2D_draw(image.data(), scene.scene_data.data(), scene.scene_data.size(), camera, dir_light, width, height);
+  kernel2D_draw(scene, count, image, camera, light, width, height);
 }
 
-void SphereTracer::kernel2D_draw(float* image, const float* scene, uint count, nsdf::Camera camera, nsdf::DirectedLight dir_light, uint width, uint height)
-{
-  const uint MAX_STEPS = 15;
-  const uint SAMPLES = 10;
-  const float MIN_THRESHOLD = 0.001f;
-  const float MAX_THRESHOLD = 1000.f;
-  
+void SphereTracer::kernel2D_draw(const float* scene, uint count, float* image, nsdf::Camera camera, nsdf::DirectedLight dir_light, uint width, uint height)
+{  
   for (uint i = 0; i < height; ++i)
   {
     for (uint j = 0; j < width; ++j)
     {
+      const uint MAX_STEPS = 15;
+      const uint SAMPLES = 10;
+      const float MIN_THRESHOLD = 0.001f;
+      const float MAX_THRESHOLD = 1000.f;
+      float aspect_ratio = (float) width / height; 
+
       float3 pixel_color = {0.f, 0.f, 0.f};
       for (uint sample = 0; sample < SAMPLES; ++sample)
       {
@@ -76,7 +97,7 @@ void SphereTracer::kernel2D_draw(float* image, const float* scene, uint count, n
         float v_shift = (float) (std::rand() % 100) / 100.f;
 
         Ray ray;
-        float3 dir = camera.generate_ray((float) (j + u_shift) / width, (float) (i + v_shift) / height);
+        float3 dir = generate_ray(camera, (float) (j + u_shift) / width, (float) (i + v_shift) / height, aspect_ratio);
         ray.dir_x = dir.x;
         ray.dir_y = dir.y;
         ray.dir_z = dir.z;
@@ -84,8 +105,7 @@ void SphereTracer::kernel2D_draw(float* image, const float* scene, uint count, n
         ray.pos_y = camera.pos_y;
         ray.pos_z = camera.pos_z;
 
-        HitRecord hit_record;
-        trace(ray, scene, count, MAX_STEPS, MIN_THRESHOLD, MAX_THRESHOLD, &hit_record);
+        HitRecord hit_record = trace(ray, scene, count, MAX_STEPS, MIN_THRESHOLD, MAX_THRESHOLD);
 
         //shading
 

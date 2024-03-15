@@ -1,0 +1,141 @@
+#version 460
+#extension GL_GOOGLE_include_directive : require
+
+#include "common_gpu.h"
+
+layout(binding = 0, set = 0) buffer data0 { float scene[]; }; //
+layout(binding = 1, set = 0) buffer data1 { float image[]; }; //
+layout(binding = 2, set = 0) buffer dataUBO { SphereTracer_GPU_UBO_Data ubo; };
+
+HitRecord trace_scene(Ray ray, uint sceneOffset, uint count, uint steps, float min_threshold, float max_threshold) {
+    float dist;
+    Sphere closest_sphere;
+    for (uint step = 0; step < steps; ++step)
+    {
+        dist = 1e6f;
+        for (uint i = 0; i < count; ++i)
+        {
+            Sphere sphere;
+            sphere.pos_x = scene[i * 4 + sceneOffset];
+            sphere.pos_y = scene[i * 4 + 1 + sceneOffset];
+            sphere.pos_z = scene[i * 4 + 2 + sceneOffset];
+            sphere.radius = scene[i * 4 + 3 + sceneOffset];
+            float cur_dist = sphere_distance.phere_distance(sphere, ray);
+            if (abs(dist) - abs(cur_dist) > 0)
+            {
+                dist = cur_dist;
+                closest_sphere = sphere;
+            }
+        }
+        ray.pos_x += ray.dir_x * dist;
+        ray.pos_y += ray.dir_y * dist;
+        ray.pos_z += ray.dir_z * dist;
+        if (abs(dist) < min_threshold || abs(dist) > max_threshold)
+        {
+            step = steps;
+        }
+    }
+
+    HitRecord hit_record;
+    hit_record.hit = abs(dist) < min_threshold;
+    if (hit_record.hit)
+    {
+        hit_record.pos_x = ray.pos_x;
+        hit_record.pos_y = ray.pos_y;
+        hit_record.pos_z = ray.pos_z;
+        vec3 normal = normalize(vec3(ray.pos_x - closest_sphere.pos_x,ray.pos_y - closest_sphere.pos_y,ray.pos_z - closest_sphere.pos_z));
+        hit_record.normal_x = normal.x;
+        hit_record.normal_y = normal.y;
+        hit_record.normal_z = normal.z;
+    }
+    hit_record.pos_x = ray.pos_x;
+    hit_record.pos_y = ray.pos_y;
+    hit_record.pos_z = ray.pos_z;
+    return hit_record;
+}
+
+float sphere_distance(Sphere s, Ray r) {
+    return length(vec3(r.pos_x - s.pos_x,r.pos_y - s.pos_y,r.pos_z - s.pos_z)) - s.radius;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+layout(local_size_x = 32, local_size_y = 8, local_size_z = 1) in;
+
+layout( push_constant ) uniform kernelArgs
+{
+  uint count;
+  Camera camera;
+  DirectedLight dir_light;
+  uint height; 
+  uint width; 
+  uint iNumElementsZ; 
+  uint tFlagsMask;    
+} kgenArgs;
+
+
+void main()
+{
+  bool runThisThread = true;
+  ///////////////////////////////////////////////////////////////// prolog
+  const uint i = uint(gl_GlobalInvocationID[0]); 
+  const uint j = uint(gl_GlobalInvocationID[1]); 
+  if(i >= kgenArgs.height + 0 || j >= kgenArgs.width + 0)
+    runThisThread = false;
+    ///////////////////////////////////////////////////////////////// prolog
+  if(runThisThread)
+  {
+  
+      const uint MAX_STEPS = 15;
+      const uint SAMPLES = 10;
+      const float MIN_THRESHOLD = 0.001f;
+      const float MAX_THRESHOLD = 1000.f;
+      float aspect_ratio = float(kgenArgs.width) / float(kgenArgs.height); 
+
+      vec3 pixel_color = vec3(0.f,0.f,0.f);
+      for (uint sample = 0; sample < SAMPLES; ++sample)
+      {
+        //tracing
+
+        float u_shift = float((rand() % 100)) / 100.f;
+        float v_shift = float((rand() % 100)) / 100.f;
+
+        Ray ray;
+        vec3 dir;// = generate_ray(camera, (float) (j + u_shift) / width, (float) (i + v_shift) / height, aspect_ratio);
+        ray.dir_x = dir.x;
+        ray.dir_y = dir.y;
+        ray.dir_z = dir.z;
+        ray.pos_x = kgenArgs.camera.pos_x;
+        ray.pos_y = kgenArgs.camera.pos_y;
+        ray.pos_z = kgenArgs.camera.pos_z;
+
+        HitRecord hit_record = trace_scene(ray, 0, kgenArgs.count, MAX_STEPS, MIN_THRESHOLD, MAX_THRESHOLD);
+
+        //shading
+
+        vec3 color;
+        if (hit_record.hit)
+        {
+          color = vec3(1.f,1.f,1.f);
+          float light = dot(vec3(hit_record.normal_x,hit_record.normal_y,hit_record.normal_z),
+                vec3(kgenArgs.dir_light.dir_x,kgenArgs.dir_light.dir_y,kgenArgs.dir_light.dir_z)) * kgenArgs.dir_light.intensity;
+          color = color * clamp(light, 0.f, 1.f);
+        }
+        else
+        {
+          color = vec3(0.1f,0.1f,0.1f);
+        }
+        pixel_color += color;
+      }
+
+      pixel_color /= float(SAMPLES);
+
+      image[(i * kgenArgs.width + j) * 3] = pixel_color.x;
+      image[(i * kgenArgs.width + j) * 3 + 1] = pixel_color.y;
+      image[(i * kgenArgs.width + j) * 3 + 2] = pixel_color.z;
+    
+  }
+}
+
