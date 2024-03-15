@@ -6,10 +6,12 @@
 #include "public_image.h"
 #include "sphere_tracing.h"
 #include <iostream>
+#include <cstdlib>
 
-const uint WIDTH = 500;
-const uint HEIGHT = 500;
+const uint WIDTH = 1000;
+const uint HEIGHT = 1000;
 const uint MAX_STEPS = 15;
+const uint SAMPLES = 10;
 const float MIN_THRESHOLD = 0.001f;
 const float MAX_THRESHOLD = 1000.f;
 
@@ -33,33 +35,42 @@ int main()
   {
     for (uint j = 0; j < WIDTH; ++j)
     {
-      //tracing
-
-      Ray ray;
-      ray.dir = camera.generate_ray((float) j / WIDTH, (float) i / HEIGHT);
-      ray.pos = float3(camera.pos_x, camera.pos_y, camera.pos_z);
-
-      HitRecord hit_record;
-
-      trace(ray, scene.scene_data.data(), scene.scene_data.size() / 4, MAX_STEPS, MIN_THRESHOLD, MAX_THRESHOLD, &hit_record);
-
-      //shading
-
-      float3 color;
-      if (hit_record.hit)
+      float3 pixel_color = {0.f, 0.f, 0.f};
+      for (uint sample = 0; sample < SAMPLES; ++sample)
       {
-        color = {1.f, 1.f, 1.f};
-        float light = dot(hit_record.normal, float3(dir_light.dir_x, dir_light.dir_y, dir_light.dir_z)) * dir_light.intensity;
-        color = color * clamp(light, 0.f, 1.f);
-      }
-      else
-      {
-        color = {0.1f, 0.1f, 0.1f};
+        //tracing
+
+        float u_shift = (float) (std::rand() % 100) / 100.f;
+        float v_shift = (float) (std::rand() % 100) / 100.f;
+
+        Ray ray;
+        ray.dir = camera.generate_ray((float) (j + u_shift) / WIDTH, (float) (i + v_shift) / HEIGHT);
+        ray.pos = float3(camera.pos_x, camera.pos_y, camera.pos_z);
+
+        HitRecord hit_record;
+        trace(ray, scene.scene_data.data(), scene.scene_data.size() / 4, MAX_STEPS, MIN_THRESHOLD, MAX_THRESHOLD, &hit_record);
+
+        //shading
+
+        float3 color;
+        if (hit_record.hit)
+        {
+          color = {1.f, 1.f, 1.f};
+          float light = dot(hit_record.normal, float3(dir_light.dir_x, dir_light.dir_y, dir_light.dir_z)) * dir_light.intensity;
+          color = color * clamp(light, 0.f, 1.f);
+        }
+        else
+        {
+          color = {0.1f, 0.1f, 0.1f};
+        }
+        pixel_color += color;
       }
 
-      image[(i * WIDTH + j) * 3] = color.x;
-      image[(i * WIDTH + j) * 3 + 1] = color.y;
-      image[(i * WIDTH + j) * 3 + 2] = color.z;
+      pixel_color /= SAMPLES;
+
+      image[(i * WIDTH + j) * 3] = pixel_color.x;
+      image[(i * WIDTH + j) * 3 + 1] = pixel_color.y;
+      image[(i * WIDTH + j) * 3 + 2] = pixel_color.z;
     }
   }
 
