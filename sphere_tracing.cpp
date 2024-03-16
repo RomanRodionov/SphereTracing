@@ -1,6 +1,5 @@
 #include "sphere_tracing.h"
 
-
 float3 get_ray(Camera camera, float u, float v, float aspect_ratio)
 {
   float viewport_height = 2.0 * std::atan(camera.fov_rad / 2.0) * camera.z_near;
@@ -74,10 +73,15 @@ HitRecord trace(Ray ray, const float* scene, uint count, uint steps, float min_t
 void SphereTracer::draw(const float* scene, float* image,
   uint count, uint width, uint height, const Camera camera, const DirectedLight light)
 {
-  kernel2D_draw(scene, image, count, width, height, camera, light);
+  // otherwise the following structures are lost ¯\_(ツ)_/¯
+  Ray a;
+  HitRecord b;
+  Sphere c;
+  kernel2D_draw(scene, image, count, width, height, camera, light, a, b, c);
 }
 
-void SphereTracer::kernel2D_draw(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight dir_light)
+void SphereTracer::kernel2D_draw(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight dir_light,
+  const Ray a, const HitRecord b, const Sphere c)
 {  
   for (uint i = 0; i < height; ++i)
   {

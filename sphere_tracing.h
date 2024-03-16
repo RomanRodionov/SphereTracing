@@ -43,5 +43,6 @@ public:
 
   virtual void draw(const float* scene[[size("count")]], float* image[[size("width*height*3")]], uint count, uint width, uint height,
           const Camera camera, const DirectedLight light);
-  virtual void kernel2D_draw(const float* scene, float* image, uint count, uint width, uint heightZ, const Camera camera, const DirectedLight light);
+  virtual void kernel2D_draw(const float* scene, float* image, uint count, uint width, uint heightZ, const Camera camera, const DirectedLight light,
+          const Ray ray, const HitRecord hit, const Sphere s);
 };

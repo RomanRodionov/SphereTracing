@@ -77,7 +77,8 @@ public:
 
   virtual void copyKernelFloatCmd(uint32_t length);
   
-  virtual void drawCmd(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight dir_light);
+  virtual void drawCmd(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight dir_light,
+  const Ray a, const HitRecord b, const Sphere c);
   
   struct MemLoc
   {

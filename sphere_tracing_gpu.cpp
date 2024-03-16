@@ -45,7 +45,8 @@ void SphereTracer_GPU::UpdateTextureMembers(std::shared_ptr<vk_utils::ICopyEngin
 { 
 }
 
-void SphereTracer_GPU::drawCmd(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight dir_light)
+void SphereTracer_GPU::drawCmd(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight dir_light,
+  const Ray a, const HitRecord b, const Sphere c)
 {
   uint32_t blockSizeX = 32;
   uint32_t blockSizeY = 8;
@@ -56,6 +57,9 @@ void SphereTracer_GPU::drawCmd(const float* scene, float* image, uint count, uin
     uint m_count; 
     Camera m_camera; 
     DirectedLight m_dir_light; 
+    Ray m_a; 
+    HitRecord m_b; 
+    Sphere m_c; 
     uint32_t m_sizeX;
     uint32_t m_sizeY;
     uint32_t m_sizeZ;
@@ -73,6 +77,9 @@ void SphereTracer_GPU::drawCmd(const float* scene, float* image, uint count, uin
   pcData.m_count = count; 
   pcData.m_camera = camera; 
   pcData.m_dir_light = dir_light; 
+  pcData.m_a = a; 
+  pcData.m_b = b; 
+  pcData.m_c = c; 
   vkCmdPushConstants(m_currCmdBuffer, drawLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(KernelArgsPC), &pcData);
   vkCmdBindPipeline(m_currCmdBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, drawPipeline);
   vkCmdDispatch    (m_currCmdBuffer, (sizeX + blockSizeX - 1) / blockSizeX, (sizeY + blockSizeY - 1) / blockSizeY, (sizeZ + blockSizeZ - 1) / blockSizeZ);
@@ -138,8 +145,11 @@ void SphereTracer_GPU::drawCmd(VkCommandBuffer a_commandBuffer, const float* sce
 {
   m_currCmdBuffer = a_commandBuffer;
   VkMemoryBarrier memoryBarrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER, nullptr, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT }; 
-    vkCmdBindDescriptorSets(a_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, drawLayout, 0, 1, &m_allGeneratedDS[0], 0, nullptr);
-  drawCmd(scene, image, count, width, height, camera, light);
+    Ray a;
+  HitRecord b;
+  Sphere c;
+  vkCmdBindDescriptorSets(a_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, drawLayout, 0, 1, &m_allGeneratedDS[0], 0, nullptr);
+  drawCmd(scene, image, count, width, height, camera, light, a, b, c);
   vkCmdPipelineBarrier(m_currCmdBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
 
 }

@@ -65,6 +65,9 @@ layout( push_constant ) uniform kernelArgs
   uint count;
   Camera camera;
   DirectedLight dir_light;
+  Ray a;
+  HitRecord b;
+  Sphere c;
   uint height; 
   uint width; 
   uint iNumElementsZ; 

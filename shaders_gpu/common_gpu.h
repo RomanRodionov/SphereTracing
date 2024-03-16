@@ -79,28 +79,25 @@ struct Camera
   float up_x, up_y, up_z;
   float fov_rad, z_near, z_far;
 };
+struct Sphere
+{
+  float pos_x, pos_y, pos_z, radius; 
+};
 struct DirectedLight
 {
   float dir_x, dir_y, dir_z;
   float intensity;
 };
-
 struct Ray
 {
   float pos_x, pos_y, pos_z;
   float dir_x, dir_y, dir_z;
 };
-
 struct HitRecord
 {
   float pos_x, pos_y, pos_z;
   float normal_x, normal_y, normal_z;
   bool hit;
-};
-
-struct Sphere
-{
-  float pos_x, pos_y, pos_z, radius; 
 };
 
 #ifndef SKIP_UBO_INCLUDE
