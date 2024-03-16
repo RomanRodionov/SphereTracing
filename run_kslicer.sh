@@ -10,7 +10,7 @@ done < config.txt
 current_directory=$(pwd)           # получаем текущую директорию и сохраняем в переменную
 cd "$kslicer_directory" || exit 1  # переходим в директорию слайсера, запускать нужно из неё
 
-$kslicer_exe $current_directory/src/sphere_tracing.cpp \
+$kslicer_exe $current_directory/sphere_tracing.cpp \
 -mainClass "SphereTracer" \
 -pattern "ipv" \
 -shaderCC "glsl" \

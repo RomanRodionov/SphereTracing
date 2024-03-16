@@ -72,10 +72,35 @@ complex complex_sqrt(complex z)
     return make_complex(abs(t2), copysign(t1, z.im));
 }
 
+struct Camera
+{
+  float pos_x, pos_y, pos_z;
+  float target_x, target_y, target_z;
+  float up_x, up_y, up_z;
+  float fov_rad, z_near, z_far;
+};
 struct DirectedLight
 {
   float dir_x, dir_y, dir_z;
   float intensity;
+};
+
+struct Ray
+{
+  float pos_x, pos_y, pos_z;
+  float dir_x, dir_y, dir_z;
+};
+
+struct HitRecord
+{
+  float pos_x, pos_y, pos_z;
+  float normal_x, normal_y, normal_z;
+  bool hit;
+};
+
+struct Sphere
+{
+  float pos_x, pos_y, pos_z, radius; 
 };
 
 #ifndef SKIP_UBO_INCLUDE
@@ -132,8 +157,20 @@ float sphere_distance(Sphere s, Ray r) {
     return length(vec3(r.pos_x - s.pos_x,r.pos_y - s.pos_y,r.pos_z - s.pos_z)) - s.radius;
 }
 
-vec3 get_ray(const float u, const float v, const float aspect_ratio) {
-return vec3(1.f,1.f,1.f);
+vec3 get_ray(Camera camera, float u, float v, float aspect_ratio) {
+  float viewport_height = 2.0 * atan(camera.fov_rad / 2.0) * camera.z_near;
+  float viewport_width = viewport_height * aspect_ratio;
+  
+  vec3 w_dir = normalize(vec3(camera.target_x - camera.pos_x,camera.target_y - camera.pos_y,camera.target_z - camera.pos_z));
+  vec3 u_dir = normalize(cross(vec3(camera.up_x,camera.up_y,camera.up_z), w_dir) * (-1));
+  vec3 v_dir = cross(w_dir, u_dir);
+
+  vec3 pos = vec3(camera.pos_x,camera.pos_y,camera.pos_z);
+  vec3 horizontal = u_dir * viewport_width;
+  vec3 vertical = v_dir * viewport_height;
+  vec3 ll_corner = pos - horizontal / 2 - vertical / 2 + w_dir * camera.z_near;
+
+  return normalize(ll_corner + horizontal * u + vertical * v - pos);
 }
 
 #define KGEN_FLAG_RETURN            1

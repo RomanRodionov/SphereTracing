@@ -4,10 +4,18 @@
         {
             "type": "gdb",
             "request": "launch",
-            "name": "Launch",
+            "args"   : ["--cpu"],
+            "name": "Launch_cpu",
             "program": "${workspaceFolder}/build/Run",
-            "stopOnEntry": false,
-            "arguments": ""
+            "stopOnEntry": false
+        },
+        {
+            "type": "gdb",
+            "request": "launch",
+            "args"   : ["--gpu"],
+            "name": "Launch_gpu",
+            "program": "${workspaceFolder}/build/Run",
+            "stopOnEntry": false
         }
     ]
 }

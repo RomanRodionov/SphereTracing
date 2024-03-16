@@ -6,7 +6,7 @@
 #include "public_scene.h"
 #include "sphere_tracing.h"
 #include <iostream>
-#include <cstdlib>
+#include <memory>
 
 const uint WIDTH = 1000;
 const uint HEIGHT = 1000;
@@ -24,6 +24,8 @@ Camera cast_camera(nsdf::Camera camera)
   res.up_x = camera.up_x;
   res.up_y = camera.up_y;
   res.up_z = camera.up_z;
+  res.z_far = camera.z_far;
+  res.z_near = camera.z_near;
   return res;
 }
 
@@ -37,7 +39,12 @@ DirectedLight cast_light(nsdf::DirectedLight light)
   return res;
 }
 
-int main()
+#ifdef USE_VULKAN
+#include "vk_context.h"
+std::shared_ptr<SphereTracer> CreateSphereTracer_GPU(vk_utils::VulkanContext a_ctx, size_t a_maxThreadsGenerated);
+#endif
+
+int main(int argc, const char** argv)
 {
   //initializing
 
@@ -53,8 +60,20 @@ int main()
   nsdf::PrimitiveSDFScene scene;
   scene.from_file("task1_references/scene1.txt");
 
-  SphereTracer renderer;
-  renderer.draw(scene.scene_data.data(), scene.scene_data.size(), image.data(), cast_camera(camera), cast_light(dir_light), WIDTH, HEIGHT);
+  std::shared_ptr<SphereTracer> tracer = nullptr;
+
+  #ifdef USE_VULKAN
+  bool onGPU = true; // TODO: you can read it from command line
+  if(onGPU)
+  {
+    auto ctx = vk_utils::globalContextGet(true, 0);
+    tracer    = CreateSphereTracer_GPU(ctx, WIDTH * HEIGHT);
+  }
+  else
+  #endif
+    tracer = std::make_shared<SphereTracer>();
+
+  tracer->draw(scene.scene_data.data(), image.data(), scene.scene_data.size(), WIDTH, HEIGHT, cast_camera(camera), cast_light(dir_light));
 
   write_image_rgb("image.png", image, WIDTH, HEIGHT);
 

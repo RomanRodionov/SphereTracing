@@ -1,12 +1,13 @@
 #include "sphere_tracing.h"
 
-float3 get_ray(const Camera camera, const float u, const float v, const float aspect_ratio)
+
+float3 get_ray(Camera camera, float u, float v, float aspect_ratio)
 {
-  double viewport_height = 2.0 * tanf(camera.fov_rad / 2.0) * camera.z_near;
-  double viewport_width = viewport_height * aspect_ratio;
+  float viewport_height = 2.0 * std::atan(camera.fov_rad / 2.0) * camera.z_near;
+  float viewport_width = viewport_height * aspect_ratio;
   
   float3 w_dir = normalize(float3(camera.target_x - camera.pos_x, camera.target_y - camera.pos_y, camera.target_z - camera.pos_z));
-  float3 u_dir = normalize(-cross(float3(camera.up_x, camera.up_y, camera.up_z), w_dir));
+  float3 u_dir = normalize(cross(float3(camera.up_x, camera.up_y, camera.up_z), w_dir) * (-1));
   float3 v_dir = cross(w_dir, u_dir);
 
   float3 pos = float3(camera.pos_x, camera.pos_y, camera.pos_z);
@@ -70,31 +71,31 @@ HitRecord trace(Ray ray, const float* scene, uint count, uint steps, float min_t
     return hit_record;
 }
 
-void SphereTracer::draw(const float* scene, uint count, float* image,
-  const Camera camera, const DirectedLight light, uint width, uint height)
+void SphereTracer::draw(const float* scene, float* image,
+  uint count, uint width, uint height, const Camera camera, const DirectedLight light)
 {
-  kernel2D_draw(scene, count, image, camera, light, width, height);
+  kernel2D_draw(scene, image, count, width, height, camera, light);
 }
 
-void SphereTracer::kernel2D_draw(const float* scene, uint count, float* image, const Camera camera, const DirectedLight dir_light, uint width, uint height)
+void SphereTracer::kernel2D_draw(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight dir_light)
 {  
   for (uint i = 0; i < height; ++i)
   {
     for (uint j = 0; j < width; ++j)
     {
-      const uint MAX_STEPS = 15;
-      const uint SAMPLES = 10;
-      const float MIN_THRESHOLD = 0.001f;
-      const float MAX_THRESHOLD = 1000.f;
+      const uint max_steps = 15;
+      const uint samples = 10;
+      const float min_threshold = 0.001f;
+      const float max_threshold = 1000.f;
       float aspect_ratio = (float) width / height; 
 
       float3 pixel_color = {0.f, 0.f, 0.f};
-      for (uint sample = 0; sample < SAMPLES; ++sample)
+      for (uint s = 0; s < samples; ++s)
       {
         //tracing
 
-        float u_shift = (float) (std::rand() % 100) / 100.f;
-        float v_shift = (float) (std::rand() % 100) / 100.f;
+        float u_shift = (float) (50 % 100) / 100.f;
+        float v_shift = (float) (50 % 100) / 100.f;
 
         Ray ray;
         float3 dir = get_ray(camera, (float) (j + u_shift) / width, (float) (i + v_shift) / height, aspect_ratio);
@@ -105,7 +106,7 @@ void SphereTracer::kernel2D_draw(const float* scene, uint count, float* image, c
         ray.pos_y = camera.pos_y;
         ray.pos_z = camera.pos_z;
 
-        HitRecord hit_record = trace(ray, scene, count, MAX_STEPS, MIN_THRESHOLD, MAX_THRESHOLD);
+        HitRecord hit_record = trace(ray, scene, count, max_steps, min_threshold, max_threshold);
 
         //shading
 
@@ -124,7 +125,7 @@ void SphereTracer::kernel2D_draw(const float* scene, uint count, float* image, c
         pixel_color += color;
       }
 
-      pixel_color /= SAMPLES;
+      pixel_color /= samples;
 
       image[(i * width + j) * 3] = pixel_color.x;
       image[(i * width + j) * 3 + 1] = pixel_color.y;

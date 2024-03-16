@@ -45,7 +45,7 @@ void SphereTracer_GPU::UpdateTextureMembers(std::shared_ptr<vk_utils::ICopyEngin
 { 
 }
 
-void SphereTracer_GPU::drawCmd(const float* scene, uint count, float* image, const Camera camera, const DirectedLight dir_light, uint width, uint height)
+void SphereTracer_GPU::drawCmd(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight dir_light)
 {
   uint32_t blockSizeX = 32;
   uint32_t blockSizeY = 8;
@@ -134,19 +134,19 @@ void SphereTracer_GPU::BarriersForSeveralBuffers(VkBuffer* a_inBuffers, VkBuffer
   }
 }
 
-void SphereTracer_GPU::drawCmd(VkCommandBuffer a_commandBuffer, const float* scene, uint count, float* image, const Camera camera, const DirectedLight light, uint width, uint height)
+void SphereTracer_GPU::drawCmd(VkCommandBuffer a_commandBuffer, const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight light)
 {
   m_currCmdBuffer = a_commandBuffer;
   VkMemoryBarrier memoryBarrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER, nullptr, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT }; 
     vkCmdBindDescriptorSets(a_commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, drawLayout, 0, 1, &m_allGeneratedDS[0], 0, nullptr);
-  drawCmd(scene, count, image, camera, light, width, height);
+  drawCmd(scene, image, count, width, height, camera, light);
   vkCmdPipelineBarrier(m_currCmdBuffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
 
 }
 
 
 
-void SphereTracer_GPU::draw(const float* scene, uint count, float* image, const Camera camera, const DirectedLight light, uint width, uint height)
+void SphereTracer_GPU::draw(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight light)
 {
   // (1) get global Vulkan context objects
   //
@@ -230,7 +230,7 @@ void SphereTracer_GPU::draw(const float* scene, uint count, float* image, const 
     beginCommandBufferInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginCommandBufferInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
     vkBeginCommandBuffer(commandBuffer, &beginCommandBufferInfo);
-    drawCmd(commandBuffer, scene, count, image, camera, light, width, height);      
+    drawCmd(commandBuffer, scene, image, count, width, height, camera, light);      
     vkEndCommandBuffer(commandBuffer);  
     auto start = std::chrono::high_resolution_clock::now();
     vk_utils::executeCommandBufferNow(commandBuffer, computeQueue, device);

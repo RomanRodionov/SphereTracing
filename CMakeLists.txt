@@ -48,14 +48,35 @@ if(NOT MSVC)
 endif()
 
 set(SOURCES
-    src/public_camera.cpp
-    src/public_scene.cpp
-    src/sphere_tracing.cpp
-    src/main.cpp
+    public_camera.cpp
+    public_scene.cpp
+    sphere_tracing.cpp
+    main.cpp
+)
+set(GPU_SOURCES
+    sphere_tracing_gpu.cpp
+    sphere_tracing_gpu_ds.cpp
+    sphere_tracing_gpu_init.cpp
+
+    external/vkutils/vk_utils.cpp
+    external/vkutils/vk_copy.cpp
+    external/vkutils/vk_context.cpp
+    external/vkutils/vk_alloc_simple.cpp
+    external/vkutils/vk_buffers.cpp
+    external/vkutils/vk_images.cpp
+    external/vkutils/vk_pipeline.cpp
+    external/vkutils/vk_descriptor_sets.cpp
 )
 
-add_executable(Run ${SOURCES})
+if(USE_VULKAN)
+  add_executable(Run ${SOURCES} ${GPU_SOURCES})
 
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+  set_target_properties(Run PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+  target_link_libraries(Run LINK_PUBLIC OpenMP::OpenMP_CXX volk "${PLATFORM_DEPENDEPNT_LIBS}")
+
+else()
+  add_executable(Run ${SOURCES})
+
+  set_target_properties(Run PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+  target_link_libraries(Run LINK_PUBLIC OpenMP::OpenMP_CXX)
+endif()

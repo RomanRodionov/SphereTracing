@@ -63,6 +63,7 @@ layout(local_size_x = 32, local_size_y = 8, local_size_z = 1) in;
 layout( push_constant ) uniform kernelArgs
 {
   uint count;
+  Camera camera;
   DirectedLight dir_light;
   uint height; 
   uint width; 
@@ -83,27 +84,30 @@ void main()
   if(runThisThread)
   {
   
-      const uint MAX_STEPS = 15;
-      const uint SAMPLES = 10;
-      const float MIN_THRESHOLD = 0.001f;
-      const float MAX_THRESHOLD = 1000.f;
+      const uint max_steps = 15;
+      const uint samples = 10;
+      const float min_threshold = 0.001f;
+      const float max_threshold = 1000.f;
       float aspect_ratio = float(kgenArgs.width) / float(kgenArgs.height); 
 
       vec3 pixel_color = vec3(0.f,0.f,0.f);
-      for (uint sample = 0; sample < SAMPLES; ++sample)
+      for (uint s = 0; s < samples; ++s)
       {
         //tracing
 
-        float u_shift = float((rand() % 100)) / 100.f;
-        float v_shift = float((rand() % 100)) / 100.f;
+        float u_shift = float((50 % 100)) / 100.f;
+        float v_shift = float((50 % 100)) / 100.f;
 
         Ray ray;
-        vec3 dir = get_ray(float((float(j) + u_shift)) / float(kgenArgs.width), float((float(i) + v_shift)) / float(kgenArgs.height), aspect_ratio);
+        vec3 dir = get_ray(kgenArgs.camera, float((float(j) + u_shift)) / float(kgenArgs.width), float((float(i) + v_shift)) / float(kgenArgs.height), aspect_ratio);
         ray.dir_x = dir.x;
         ray.dir_y = dir.y;
         ray.dir_z = dir.z;
+        ray.pos_x = kgenArgs.camera.pos_x;
+        ray.pos_y = kgenArgs.camera.pos_y;
+        ray.pos_z = kgenArgs.camera.pos_z;
 
-        HitRecord hit_record = trace_scene(ray, 0, kgenArgs.count, MAX_STEPS, MIN_THRESHOLD, MAX_THRESHOLD);
+        HitRecord hit_record = trace_scene(ray, 0, kgenArgs.count, max_steps, min_threshold, max_threshold);
 
         //shading
 
@@ -122,7 +126,7 @@ void main()
         pixel_color += color;
       }
 
-      pixel_color /= float(SAMPLES);
+      pixel_color /= float(samples);
 
       image[(i * kgenArgs.width + j) * 3] = pixel_color.x;
       image[(i * kgenArgs.width + j) * 3 + 1] = pixel_color.y;

@@ -4,78 +4,13 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "BuildRelease",
-            "type": "shell",
-            "command": "cd cmake-build-release && make -j 8",
-            "group": "build"
-        },
-        {
-            "label": "BuildDebug",
-            "type": "shell",
-            "command": "cd cmake-build-debug && make -j 8",
-            "group": "build",
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
-            "label": "RebuildCurrent",
-            "type": "shell",
-            "command": "cmake --build build --clean-first --target all",  // --config Release 
-            "group": "build"
-        },
-        {
-            "label": "CleanCurrent",
-            "type": "shell",
-            "command": "cmake --build build --target clean",
-            "group": "build"
-        },
-        {
             "label": "Build Kernels (GLSL)",
             "type": "shell",
-            "command": "cd src/shaders_gpu && bash build.sh",
+            "command": "cd shaders_gpu && bash build.sh",
             "group": "build",
             "problemMatcher": [
                 "$gcc"
             ]
-        },
-        {
-            "label": "Build Shaders PinHole (GLSL)",
-            "type": "shell",
-            "command": "cd cam_plugin/shaders_pinhole_gpu && bash build.sh",
-            "group": "build",
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
-            "label": "Build Shaders TableLens (GLSL)",
-            "type": "shell",
-            "command": "cd cam_plugin/shaders_tablelens_gpu && bash build.sh",
-            "group": "build",
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-        {
-            "label": "Clear",
-            "type": "shell",
-            "command": "rm integrator_pt1_temp.cpp",
-            "group": "build",
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-
-        {
-            "label": "CleanBuilt",
-            "type": "shell",
-            "command": "cd build && rm -rf *",
-            "group": "build",
-            "problemMatcher": [
-                "$gcc"
-            ]
-        },
-
+        }
     ]
 }

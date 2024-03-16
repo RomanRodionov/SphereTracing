@@ -67,9 +67,9 @@ public:
   virtual void ReadPlainMembers(std::shared_ptr<vk_utils::ICopyEngine> a_pCopyEngine);
   static VkPhysicalDeviceFeatures2 ListRequiredDeviceFeatures(std::vector<const char*>& deviceExtensions);
   
-  virtual void drawCmd(VkCommandBuffer a_commandBuffer, const float* scene, uint count, float* image, const Camera camera, const DirectedLight light, uint width, uint height);
+  virtual void drawCmd(VkCommandBuffer a_commandBuffer, const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight light);
 
-  void draw(const float* scene, uint count, float* image, const Camera camera, const DirectedLight light, uint width, uint height) override;
+  void draw(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight light) override;
 
   inline vk_utils::ExecTime GetdrawExecutionTime() const { return m_exTimedraw; }
 
@@ -77,7 +77,7 @@ public:
 
   virtual void copyKernelFloatCmd(uint32_t length);
   
-  virtual void drawCmd(const float* scene, uint count, float* image, const Camera camera, const DirectedLight dir_light, uint width, uint height);
+  virtual void drawCmd(const float* scene, float* image, uint count, uint width, uint height, const Camera camera, const DirectedLight dir_light);
   
   struct MemLoc
   {
