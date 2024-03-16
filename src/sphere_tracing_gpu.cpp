@@ -45,7 +45,7 @@ void SphereTracer_GPU::UpdateTextureMembers(std::shared_ptr<vk_utils::ICopyEngin
 { 
 }
 
-void SphereTracer_GPU::drawCmd(const float* scene, uint count, float* image, nsdf::Camera camera, nsdf::DirectedLight dir_light, uint width, uint height)
+void SphereTracer_GPU::drawCmd(const float* scene, uint count, float* image, const Camera camera, const DirectedLight dir_light, uint width, uint height)
 {
   uint32_t blockSizeX = 32;
   uint32_t blockSizeY = 8;
@@ -134,7 +134,7 @@ void SphereTracer_GPU::BarriersForSeveralBuffers(VkBuffer* a_inBuffers, VkBuffer
   }
 }
 
-void SphereTracer_GPU::drawCmd(VkCommandBuffer a_commandBuffer, const float* scene, uint count, float* image, nsdf::Camera camera, nsdf::DirectedLight light, uint width, uint height)
+void SphereTracer_GPU::drawCmd(VkCommandBuffer a_commandBuffer, const float* scene, uint count, float* image, const Camera camera, const DirectedLight light, uint width, uint height)
 {
   m_currCmdBuffer = a_commandBuffer;
   VkMemoryBarrier memoryBarrier = { VK_STRUCTURE_TYPE_MEMORY_BARRIER, nullptr, VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT }; 
@@ -146,7 +146,7 @@ void SphereTracer_GPU::drawCmd(VkCommandBuffer a_commandBuffer, const float* sce
 
 
 
-void SphereTracer_GPU::draw(const float* scene, uint count, float* image, nsdf::Camera camera, nsdf::DirectedLight light, uint width, uint height)
+void SphereTracer_GPU::draw(const float* scene, uint count, float* image, const Camera camera, const DirectedLight light, uint width, uint height)
 {
   // (1) get global Vulkan context objects
   //

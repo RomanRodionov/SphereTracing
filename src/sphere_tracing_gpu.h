@@ -15,9 +15,6 @@
 
 #include "sphere_tracing.h"
 
-using Ray = SphereTracer::Ray; // for passing this data type to UBO
-using HitRecord = SphereTracer::HitRecord; // for passing this data type to UBO
-using Sphere = SphereTracer::Sphere; // for passing this data type to UBO
 #include "include/SphereTracer_gpu_ubo.h"
 class SphereTracer_GPU : public SphereTracer
 {
@@ -70,9 +67,9 @@ public:
   virtual void ReadPlainMembers(std::shared_ptr<vk_utils::ICopyEngine> a_pCopyEngine);
   static VkPhysicalDeviceFeatures2 ListRequiredDeviceFeatures(std::vector<const char*>& deviceExtensions);
   
-  virtual void drawCmd(VkCommandBuffer a_commandBuffer, const float* scene, uint count, float* image, nsdf::Camera camera, nsdf::DirectedLight light, uint width, uint height);
+  virtual void drawCmd(VkCommandBuffer a_commandBuffer, const float* scene, uint count, float* image, const Camera camera, const DirectedLight light, uint width, uint height);
 
-  void draw(const float* scene, uint count, float* image, nsdf::Camera camera, nsdf::DirectedLight light, uint width, uint height) override;
+  void draw(const float* scene, uint count, float* image, const Camera camera, const DirectedLight light, uint width, uint height) override;
 
   inline vk_utils::ExecTime GetdrawExecutionTime() const { return m_exTimedraw; }
 
@@ -80,7 +77,7 @@ public:
 
   virtual void copyKernelFloatCmd(uint32_t length);
   
-  virtual void drawCmd(const float* scene, uint count, float* image, nsdf::Camera camera, nsdf::DirectedLight dir_light, uint width, uint height);
+  virtual void drawCmd(const float* scene, uint count, float* image, const Camera camera, const DirectedLight dir_light, uint width, uint height);
   
   struct MemLoc
   {

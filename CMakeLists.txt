@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5.0)
 project(SphereTracing VERSION 0.1.0 LANGUAGES C CXX)
 
 set (CMAKE_CXX_STANDARD 17)
-option(USE_VULKAN "Enable GPU implementation via Vulkan" OFF)
+option(USE_VULKAN "Enable GPU implementation via Vulkan" ON)
 
 find_package(OpenMP)
 

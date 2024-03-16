@@ -72,35 +72,11 @@ complex complex_sqrt(complex z)
     return make_complex(abs(t2), copysign(t1, z.im));
 }
 
-struct Ray
-  {
-    float pos_x, pos_y, pos_z;
-    float dir_x, dir_y, dir_z;
-  };
-struct HitRecord
-  {
-    float pos_x, pos_y, pos_z;
-    float normal_x, normal_y, normal_z;
-    uint hit;
-  };
-struct Sphere
-  {
-    float pos_x, pos_y, pos_z, radius; 
-  };
-struct Camera
-  {
-    float pos_x, pos_y, pos_z; //camera position
-    float target_x, target_y, target_z; //point, at which camera is looking
-    float up_x, up_y, up_z; //up vector for camera
-    float fov_rad; //field of view in radians
-    float z_near; //distance to near plane
-    float z_far; //distance to far plane
-  };
 struct DirectedLight
-  {
-    float dir_x, dir_y, dir_z; //direction TO light, i.e 0,1,0 if light is above
-    float intensity;
-  };
+{
+  float dir_x, dir_y, dir_z;
+  float intensity;
+};
 
 #ifndef SKIP_UBO_INCLUDE
 #include "include/SphereTracer_gpu_ubo.h"
@@ -152,11 +128,19 @@ mat3 make_float3x3(vec3 a, vec3 b, vec3 c) { // different way than mat3(a,b,c)
               a.z, b.z, c.z);
 }
 
+float sphere_distance(Sphere s, Ray r) {
+    return length(vec3(r.pos_x - s.pos_x,r.pos_y - s.pos_y,r.pos_z - s.pos_z)) - s.radius;
+}
+
+vec3 get_ray(const float u, const float v, const float aspect_ratio) {
+return vec3(1.f,1.f,1.f);
+}
+
 #define KGEN_FLAG_RETURN            1
 #define KGEN_FLAG_BREAK             2
 #define KGEN_FLAG_DONT_SET_EXIT     4
 #define KGEN_FLAG_SET_EXIT_NEGATIVE 8
 #define KGEN_REDUCTION_LAST_STEP    16
-#define CFLOAT_GUARDIAN 
 #define MAXFLOAT FLT_MAX
+#define CFLOAT_GUARDIAN 
 
